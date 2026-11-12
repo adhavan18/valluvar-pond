@@ -1,0 +1,5 @@
+.godot/
+shot*.png
+shot*.png.import
+docs/*.import
+.vercel/
