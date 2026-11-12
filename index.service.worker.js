@@ -4,7 +4,7 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1794484156|4290730';
+const CACHE_VERSION = '1794484444|4263721';
 /** @type {string} */
 const CACHE_PREFIX = 'Valluvar's Pond-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
