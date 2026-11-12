@@ -1,0 +1,5 @@
+.godot/
+shot*.png
+*.tmp
+.vercel/
+android/
