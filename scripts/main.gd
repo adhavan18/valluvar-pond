@@ -33,6 +33,7 @@ func _ready() -> void:
 	hud.hide_leave()
 	hud.set_hearts(3)
 	fishing.start()
+	DisplayServer.tts_get_voices()   # wakes the browser's voice list early, ready for the first catch
 
 	var shot_delay := 3.0
 	for arg in OS.get_cmdline_user_args():

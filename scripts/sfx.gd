@@ -167,18 +167,18 @@ func _bed(dur: float) -> PackedFloat32Array:
 # ---------- speech: the device's own Tamil voice ----------
 
 static var _voice := ""
-static var _voice_checked := false
 
-## Reads Tamil text aloud with the device's Tamil voice, if it has one (most phones and
-## browsers do; where there is none, nothing is said).
+## Reads Tamil text aloud with the device's Tamil voice, if it has one. Browsers load their
+## voices a moment after the page opens, so the list is asked for again until a voice turns up.
+## Where the device has no Tamil voice, nothing is said.
 static func say(text: String, interrupt: bool = true) -> void:
 	if inst == null or inst.muted:
 		return
-	if not _voice_checked:
-		_voice_checked = true
-		var voices := DisplayServer.tts_get_voices_for_language("ta")
-		if voices.size() > 0:
-			_voice = voices[0]
+	if _voice == "":
+		for v: Dictionary in DisplayServer.tts_get_voices():
+			if str(v.get("language", "")).to_lower().begins_with("ta"):
+				_voice = str(v.get("id", ""))
+				break
 	if _voice == "":
 		return
 	DisplayServer.tts_speak(text, _voice, 90, 1.0, 0.85, 0, interrupt)
