@@ -1,5 +1,5 @@
 .godot/
 shot*.png
-*.tmp
+shot*.png.import
+docs/*.import
 .vercel/
-android/

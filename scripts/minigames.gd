@@ -26,6 +26,7 @@ var _options: VBoxContainer
 var _tiles: HFlowContainer
 var _status: Label
 var _again: Button
+var _panel: PanelContainer
 
 var kind := ""
 var round_no := 0
@@ -60,6 +61,7 @@ func setup(p_tamil: Font, p_latin: Font) -> void:
 	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
 	panel.custom_minimum_size = Vector2(860, 0)
+	_panel = panel
 	_root.add_child(panel)
 	var pad := MarginContainer.new()
 	for side in ["left", "right"]:
@@ -154,6 +156,16 @@ func _paint(b: Button, color: Color) -> void:
 	b.add_theme_stylebox_override("disabled", _box(color, 14, Color(0.55, 0.38, 0.16, 0.3), 2))
 	b.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 
+## Fits the panel to the width available (interface units), for upright phones.
+func fit(w: float) -> void:
+	var pw := minf(860.0, w - 20.0)
+	_panel.custom_minimum_size.x = pw
+	_verse.custom_minimum_size.x = pw - 80.0
+	_meaning.custom_minimum_size.x = pw - 80.0
+	var size := 24 if w < 900.0 else 30
+	_verse.add_theme_font_size_override("normal_font_size", size)
+	_verse.add_theme_font_size_override("bold_font_size", size)
+
 func _clear(box: Node) -> void:
 	for c in box.get_children():
 		c.queue_free()
@@ -203,6 +215,9 @@ func _finish() -> void:
 
 func _gain(points: int) -> void:
 	right += 1
+	Data.collect(k)
+	# Hear the whole Kural, now complete.
+	Sfx.say(", ".join(Data.lines_of(k)))
 	earned += points
 	Data.wisdom += points
 
@@ -210,7 +225,7 @@ func _gain(points: int) -> void:
 
 func _school_round() -> void:
 	var lines := Data.lines_of(k)
-	_verse.text = "[center]%s\n[color=#a4262c]＿＿＿＿＿＿＿＿[/color][/center]" % lines[0]
+	_verse.text = "[center]%s\n[color=#a4262c]__________[/color][/center]" % lines[0]
 	var choices: Array[String] = [lines[1]]
 	while choices.size() < 3:
 		var other: Dictionary = Data.kurals[rng.randi() % Data.kurals.size()]
@@ -267,7 +282,7 @@ func _show_written() -> void:
 	var a: Array[String] = []
 	var b: Array[String] = []
 	for i in expected.size():
-		var w := expected[i] if i < placed else "[color=#b9a57e]＿＿[/color]"
+		var w := expected[i] if i < placed else "[color=#b9a57e]____[/color]"
 		if i < first_len:
 			a.append(w)
 		else:
@@ -281,6 +296,8 @@ func _hut_pick(b: Button, w: String) -> void:
 		placed += 1
 		b.queue_free()
 		Sfx.play("click", 1.0 + placed * 0.06)
+		if placed < expected.size():
+			Sfx.say(w)   # each word is spoken as it is written
 		_show_written()
 		if placed == expected.size():
 			busy = true

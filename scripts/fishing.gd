@@ -9,8 +9,8 @@ signal left
 
 enum State { MENU, IDLE, CASTING, WAITING, BITE, LANDING, OVER }
 
-const START_TIME := 60.0
-const MAX_TIME := 75.0
+const START_TIME := 75.0
+const MAX_TIME := 90.0
 const FISH_COUNT := 5
 const FISH_COLORS := [Color(0.95, 0.52, 0.2), Color(0.96, 0.93, 0.88), Color(0.86, 0.26, 0.2), Color(0.98, 0.72, 0.3), Color(0.9, 0.6, 0.5)]
 
@@ -217,7 +217,7 @@ func _spawn_fish() -> void:
 		fishes.append(f)
 
 func _fish_speed() -> float:
-	return (1.05 + minf(streak, 12) * 0.11) * (1.5 if storm else 1.0)
+	return (0.85 + minf(streak, 12) * 0.09) * (1.5 if storm else 1.0)
 
 func _set_storm(on: bool) -> void:
 	rain.emitting = on
@@ -302,6 +302,8 @@ func _reel_back() -> void:
 func _hook() -> void:
 	var f := biter
 	biter = null
+	if f != golden:
+		Sfx.say(f.word)   # hear the word that was hooked, right or wrong
 	valluvar.strike()
 	if f == golden:
 		_land(f, true)
@@ -356,10 +358,13 @@ func _land(f: Fish, is_golden: bool) -> void:
 		return
 	streak += 1
 	caught += 1
+	# Then the whole Kural, now complete.
+	Sfx.say(", ".join(Data.lines_of(q_kural)), false)
 	var gain := (10 + 2 * mini(streak, 10)) * (2 if storm else 1)
 	score += gain
 	Data.wisdom += gain
-	time_left = minf(MAX_TIME, time_left + 6.0)
+	Data.collect(q_kural)
+	time_left = minf(MAX_TIME, time_left + 8.0)
 	hud.set_score(score, streak)
 	hud.show_kural(q_lines, q_line, q_index, true, str(q_kural["en"]), "Kural %d · %s" % [int(q_kural["id"]), str(q_kural["chTa"])])
 	hud.banner("%s  +%d" % [answer, gain])
@@ -465,7 +470,7 @@ func _attract() -> void:
 	if golden:
 		all.append(golden)
 	for f in all:
-		if f.state == Fish.State.WANDER and f.position.distance_to(bobber.position) < 2.5:
+		if f.state == Fish.State.WANDER and f.position.distance_to(bobber.position) < 2.9:
 			f.chase(bobber.position)
 		if f.state == Fish.State.CHASE and Vector2(f.position.x - bobber.position.x, f.position.z - bobber.position.z).length() < 0.42:
 			_bite(f, all)
@@ -478,7 +483,7 @@ func _bite(f: Fish, all: Array[Fish]) -> void:
 	for other in all:
 		if other != f:
 			other.lose_interest()
-	bite_timer = maxf(0.5, 1.15 - streak * 0.05) * (0.85 if storm else 1.0)
+	bite_timer = maxf(0.8, 1.7 - streak * 0.06) * (0.85 if storm else 1.0)
 	_ripple(bobber.position)
 	hud.prompt("TAP TO HOOK!", true)
 	Sfx.play("bite")

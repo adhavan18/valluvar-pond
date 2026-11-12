@@ -156,7 +156,7 @@ func _ready() -> void:
 	_leave.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_leave.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	_leave.offset_right = -20
-	_leave.offset_top = 58
+	_leave.offset_top = 100
 	_leave.pressed.connect(func() -> void: leave_pressed.emit())
 	root.add_child(_leave)
 	# What Valluvar can do where he stands ("Sit and fish").
@@ -230,7 +230,7 @@ func show_kural(lines: Array, blank_line: int, blank_index: int, solved: bool, m
 		for wi in words.size():
 			var w: String = words[wi]
 			if li == blank_line and wi == blank_index:
-				parts.append("[color=#a4262c][b]%s[/b][/color]" % w if solved else "[color=#a4262c]＿＿＿＿[/color]")
+				parts.append("[color=#a4262c][b]%s[/b][/color]" % w if solved else "[color=#a4262c]______[/color]")
 			else:
 				parts.append(w)
 		out.append(" ".join(parts))
@@ -317,8 +317,36 @@ func set_mode(mode: String) -> void:
 		_action.visible = false
 
 func set_wisdom(n: int) -> void:
-	_wisdom.text = "ஞானம்  %d" % n
+	_wisdom.text = "ஞானம்  %d\nகுறள்  %d / %d" % [n, Data.collected.size(), Data.kurals.size()]
 
 func set_action(text: String) -> void:
 	_action.visible = text != ""
 	_action.text = text
+
+## The fishing-only build has no "leave" button: there is nowhere else to go.
+func hide_leave() -> void:
+	_leave.visible = false
+
+var _fit_w := -1.0
+
+## Re-flows the display for the width available (in interface units): on a narrow, upright
+## phone the leaf shrinks to fit, the couplet wraps at a smaller size, and the hearts, score
+## and wisdom move below the leaf instead of beside it.
+func fit(w: float) -> void:
+	if is_equal_approx(w, _fit_w):
+		return
+	_fit_w = w
+	var narrow := w < 900.0
+	var leaf_w := minf(760.0, w - 24.0)
+	_leaf.custom_minimum_size.x = leaf_w
+	_meaning.custom_minimum_size.x = leaf_w - 70.0
+	_couplet.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if narrow else TextServer.AUTOWRAP_OFF
+	_couplet.custom_minimum_size.x = leaf_w - 70.0 if narrow else 0.0
+	var size := 24 if narrow else 30
+	_couplet.add_theme_font_size_override("normal_font_size", size)
+	_couplet.add_theme_font_size_override("bold_font_size", size)
+	_panel.custom_minimum_size.x = minf(560.0, w - 30.0)
+	_panel_body.custom_minimum_size.x = minf(500.0, w - 90.0)
+	_stats.position.y = 250.0 if narrow else 18.0
+	_wisdom.offset_top = 250.0 if narrow else 16.0
+	_leave.offset_top = _wisdom.offset_top + 84.0

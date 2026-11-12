@@ -6,6 +6,8 @@ static var kurals: Array = []
 static var word_pool: Array[String] = []
 static var wisdom := 0
 static var best_fishing := 0
+## Ids of the Kurals completed in any game.
+static var collected := {}
 
 static func load_all() -> void:
 	var f := FileAccess.open("res://data/kurals.json", FileAccess.READ)
@@ -21,12 +23,18 @@ static func load_all() -> void:
 	if cfg.load("user://save.cfg") == OK:
 		best_fishing = int(cfg.get_value("game", "best", 0))
 		wisdom = int(cfg.get_value("game", "wisdom", 0))
+		for id in cfg.get_value("game", "collected", []):
+			collected[int(id)] = true
 
 static func save() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("game", "best", best_fishing)
 	cfg.set_value("game", "wisdom", wisdom)
+	cfg.set_value("game", "collected", collected.keys())
 	cfg.save("user://save.cfg")
+
+static func collect(k: Dictionary) -> void:
+	collected[int(k["id"])] = true
 
 ## The words of a line, without punctuation.
 static func words(line: String) -> Array[String]:

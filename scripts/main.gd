@@ -28,6 +28,7 @@ var _cam_tween: Tween
 var _hint_time := 6.0
 var _shot_path := ""
 var _t := 0.0
+var _back := 1.0   # how far the pond camera steps back on narrow screens
 var bright := 1.0   # scales the storm lighting on the Compatibility renderer
 
 func _ready() -> void:
@@ -44,6 +45,7 @@ func _ready() -> void:
 	mini = Minigames.new()
 	add_child(mini)
 	mini.setup(hud.tamil, hud.latin)
+	DisplayServer.tts_get_voices()   # wakes the voice list early, ready for the first word
 
 	hud.start_pressed.connect(func() -> void:
 		Sfx.play("click")
@@ -175,7 +177,7 @@ func _enter(id: String) -> void:
 		player.visible = false
 		seated.visible = true
 		hud.set_mode("fishing")
-		var goal := Transform3D(Basis(), POND_CAM).looking_at(POND_LOOK, Vector3.UP)
+		var goal := Transform3D(Basis(), POND_LOOK + (POND_CAM - POND_LOOK) * _back).looking_at(POND_LOOK, Vector3.UP)
 		if _cam_tween:
 			_cam_tween.kill()
 		_cam_tween = create_tween()
@@ -212,6 +214,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		if near != "" and event.keycode in [KEY_E, KEY_ENTER, KEY_SPACE]:
 			_enter(near)
 
+## Upright phones: enlarge the interface so text stays readable, re-flow it, and widen the pond view.
+func _fit_screen() -> void:
+	var size := get_viewport().get_visible_rect().size
+	var aspect := size.x / maxf(size.y, 1.0)
+	var ui := clampf(1.5 / aspect, 1.0, 2.2)
+	if absf(get_window().content_scale_factor - ui) > 0.01:
+		get_window().content_scale_factor = ui
+	var w := get_viewport().get_visible_rect().size.x
+	hud.fit(w)
+	mini.fit(w)
+	_back = clampf(1.98 / aspect, 1.0, 2.7)
+	Fish.label_boost = lerpf(1.0, _back, 0.75) if mode == Mode.FISHING else 1.0
+
 ## A small ring where the ground was tapped.
 func _tap_mark(at: Vector3) -> void:
 	var ring := TorusMesh.new()
@@ -231,6 +246,7 @@ func _tap_mark(at: Vector3) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
+	_fit_screen()
 	hud.set_wisdom(Data.wisdom)
 	for id: String in markers:
 		var node: MeshInstance3D = markers[id]

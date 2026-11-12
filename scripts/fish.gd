@@ -7,6 +7,9 @@ enum State { WANDER, CHASE, BITING, FLEE, CAUGHT }
 
 const DEPTH := World.WATER_Y - 0.13
 
+## Words grow when the camera stands further back (upright phones), so they stay readable.
+static var label_boost := 1.0
+
 var word := ""
 var golden := false
 var state: int = State.WANDER
@@ -110,6 +113,7 @@ func flash(color: Color) -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
+	label.pixel_size = 0.0058 * label_boost
 	if state == State.CAUGHT:
 		_tail.rotation.y = sin(_t * 30.0) * 0.7
 		return

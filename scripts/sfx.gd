@@ -163,3 +163,22 @@ func _bed(dur: float) -> PackedFloat32Array:
 		var edge := minf(1.0, minf(t, 1.0 - t) * 12.0)
 		b[i] = (a * 1.6 + c * 0.12 * (0.6 + 0.4 * sin(TAU * t * 3.0))) * edge
 	return b
+
+# ---------- speech: the device's own Tamil voice ----------
+
+static var _voice := ""
+
+## Reads Tamil text aloud with the device's Tamil voice, if it has one. Browsers load their
+## voices a moment after the page opens, so the list is asked for again until a voice turns up.
+## Where the device has no Tamil voice, nothing is said.
+static func say(text: String, interrupt: bool = true) -> void:
+	if inst == null or inst.muted:
+		return
+	if _voice == "":
+		for v: Dictionary in DisplayServer.tts_get_voices():
+			if str(v.get("language", "")).to_lower().begins_with("ta"):
+				_voice = str(v.get("id", ""))
+				break
+	if _voice == "":
+		return
+	DisplayServer.tts_speak(text, _voice, 90, 1.0, 0.85, 0, interrupt)
