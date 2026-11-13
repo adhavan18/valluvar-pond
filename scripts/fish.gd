@@ -16,6 +16,8 @@ var state: int = State.WANDER
 var speed := 1.2
 var target := Vector3.ZERO
 var label: Label3D
+var label_w := 1.0   # width of the word, in world units
+var lift := 0.8      # height the word wants to sit at above the fish
 var _tail: Node3D
 var _t := 0.0
 var _rng := RandomNumberGenerator.new()
@@ -78,6 +80,7 @@ func setup(p_word: String, color: Color, font: Font, p_golden: bool = false) -> 
 	label.outline_render_priority = 9
 	label.position = Vector3(0, 0.85, 0)
 	add_child(label)
+	label_w = font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, 64).x * 0.0058
 	_pick_target()
 
 func _pick_target() -> void:
@@ -114,6 +117,7 @@ func flash(color: Color) -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	label.pixel_size = 0.0058 * label_boost
+	label.position.y = lerpf(label.position.y, lift, clampf(delta * 7.0, 0.0, 1.0))
 	if state == State.CAUGHT:
 		_tail.rotation.y = sin(_t * 30.0) * 0.7
 		return

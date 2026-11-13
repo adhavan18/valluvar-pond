@@ -212,8 +212,6 @@ func _spawn_fish() -> void:
 		f.position = Vector3(cos(ang) * r, Fish.DEPTH, sin(ang) * r)
 		f.rotation.y = rng.randf() * TAU
 		f.speed = _fish_speed()
-		# Stagger the words at two heights so neighbours stay readable.
-		f.label.position.y = 0.8 + (i % 2) * 0.42
 		fishes.append(f)
 
 func _fish_speed() -> float:
@@ -398,6 +396,7 @@ func _process(delta: float) -> void:
 	_update_bobber(delta)
 	_draw_line()
 	_separate(delta)
+	_declutter()
 	if state == State.MENU or state == State.OVER:
 		return
 	if state != State.LANDING:
@@ -441,6 +440,30 @@ func _separate(delta: float) -> void:
 					a.position += push
 				if b.state == Fish.State.WANDER and World.in_pond(b.position - push, 1.0):
 					b.position -= push
+
+## Words that would overlap on screen are stacked: the later fish lifts its word above the other.
+func _declutter() -> void:
+	var right := camera.global_transform.basis.x
+	var up := camera.global_transform.basis.y
+	var boost := Fish.label_boost
+	var row := 0.42 * boost
+	var boxes: Array[Vector3] = []   # x along the screen, y up the screen, z = half width
+	for f in fishes:
+		var half := f.label_w * boost * 0.5 + 0.22 * boost
+		var x := f.position.dot(right)
+		var lift := 0.8
+		for step in 5:
+			var y := (f.position + Vector3(0, lift, 0)).dot(up)
+			var clash := false
+			for b in boxes:
+				if absf(x - b.x) < half + b.z and absf(y - b.y) < row * 1.05:
+					clash = true
+					break
+			if not clash:
+				break
+			lift += row * 1.1 / maxf(up.y, 0.4)
+		f.lift = lift
+		boxes.append(Vector3(x, (f.position + Vector3(0, lift, 0)).dot(up), half))
 
 func _update_bobber(delta: float) -> void:
 	if bobber_rest:
